@@ -6,4 +6,4 @@ This is just to keep track of the problems that I solve on https://www.hackerran
 
 *TicTacToe*
 
-![alt tag](https://raw.githubusercontent.com/rcbop/hacker-rank-challenges/blob/master/python-tic-tac.png)
+[[(https://raw.githubusercontent.com/rcbop/hacker-rank-challenges/master/python-tic-tac.png)|alt=tictactoe]]
