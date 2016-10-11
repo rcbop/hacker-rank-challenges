@@ -1,8 +1,12 @@
 #!/bin/python3
 import sys
 import random
+import copy
 
 class TicTacToe(object):
+
+    AI_WIN="I WIN!! YES!! YES!! I am the true master\n"
+    USER_WIN="Ok you've won this time, but I'll get you in the next one\n"
 
     def __init__(self, player_token, ai_marker):
         self.user_marker = player_token
@@ -10,12 +14,14 @@ class TicTacToe(object):
         self.winner = '-'
         self.board = self.set_board()
         self.current_marker = self.user_marker
+        self.last_pick = -1
 
     def play_turn(self, spot):
 
         if self.within_range(spot) and not self.spot_taken(spot):
             self.board[spot-1] = self.current_marker
             self.current_marker = self.ai_marker if self.current_marker == self.user_marker else self.user_marker
+            self.last_pick = spot
             return True
         else:
             return False
@@ -31,24 +37,29 @@ class TicTacToe(object):
         return ['-' for i in range(0,9)]
 
     def print_board(self):
-        print("--- GAME ---\n")
+        print(bcolors.ENDC)
         for i in range(0,len(self.board)):
             if (i % 3 == 0 and i != 0):
-                print("\n--------------")
+                print("\n\x1b[3;34;40m---------------\x1b[0m")
 
             line = ' | %s ' % (self.board[i])
+            if self.last_pick == (i+1):
+                line = "\x1b[3;31;40m" + line + "\x1b[0m"
+            else:
+                line = "\x1b[3;34;40m" + line + "\x1b[0m"
+
             print(line, end="")
-        print("\n")
+        print("\n"+bcolors.ENDC+bcolors.BOLD)
 
     def print_index_board(self):
-        print("--- Indexes ---\n")
+        print(bcolors.HEADER+"--- Indexes ---\n")
         for i in range(0,9):
             if (i % 3 == 0 and i != 0):
                 print("\n--------------")
 
             #line = ' | %s ' % (i)
             print(' | %s ' % (i+1), end="")
-        print("\n")
+        print("\n"+bcolors.ENDC+bcolors.BOLD)
 
     def have_winner(self):
         diagonals_and_middles = (self.right_diagonal() or\
@@ -104,18 +115,23 @@ class TicTacToe(object):
         game_has_winner = self.have_winner()
         if game_has_winner:
             if self.winner == self.ai_marker:
-                return "I WIN!! YES!! YES!! I am the true master\n"
+                return self.AI_WIN
             else:
-                return "Ok you've won this time, but I'll get you in the next one\n"
+                return self.USER_WIN
             # return "We have a winner!!!\nThe winner is %s" % self.winner
         elif self.board_full():
             return "Draw: Game Over!"
         else:
             return "notover"
 
+from abc import ABCMeta, abstractmethod
+
 class AI(object):
-    @classmethod
-    def pick_spot(cls, game):
+    @abstractmethod
+    def pick_spot(self):
+        pass
+
+    def random_option(self, game):
         options = []
         for i in range(1,10):
             if not game.spot_taken(i):
@@ -123,51 +139,141 @@ class AI(object):
         if len(options) > 0:
             return random.choice(options)
         else:
-            raise Exception('No choices left bro')
+            raise Exception("No choices left bro, I'm confused")
 
+class DumbAI(AI):
+    def pick_spot(self, game):
+        return self.random_option(game)
 
+class SmartAI(AI):
+    def pick_spot(self, game):
+        # print("DEBUG",game.ai_marker, game.user_marker)
 
-print("=========================")
-print("=== TIC TAC TOE GAME ====")
-print("=========================\n\n")
+        # print("trying to win first")
+        move = self.check_win_move(game, game.ai_marker, game.AI_WIN)
+        if move != None:
+            return move
 
-print("You're about to witness a true MASTER playing!!\nChoose your weap.. ops, characters!")
+        # print("trying to avoid that you win")
+        move = self.check_win_move(game, game.user_marker, game.USER_WIN)
+        if move != None:
+            return move
+
+        # print("trying to pick a corner")
+        move = self.choose_random_move_from_list(game, [1, 3, 7, 9])
+        if move != None:
+            return move
+
+        # print("trying to pick the center")
+        if not game.spot_taken(5):
+            return 5
+
+        # print("picking anything else")
+        return self.choose_random_move_from_list(game, [2, 4, 6, 8])
+
+    def check_win_move(self, game, marker, win_message):
+        for i in range(1,10):
+            game_copy = copy.deepcopy(game)
+            game_copy.current_marker = marker
+            if not game_copy.spot_taken(i):
+                game_copy.play_turn(i)
+                if game_copy.game_over() == win_message:
+                    return i
+        return None
+
+    def choose_random_move_from_list(self, game, move_list):
+        choices = []
+        for i in move_list:
+            if not game.spot_taken(i):
+                choices.append(i)
+
+        if len(choices) > 0:
+            return random.choice(choices)
+        else:
+            return None
+
+class Helper(object):
+    @classmethod
+    def should_loop(cls, user_input, previous_input):
+        if previous_input != None:
+            return (user_input == '' or previous_input == user_input)
+        else:
+            return user_input == ''
+
+    @classmethod
+    def validate_input(cls, user_input, previous_input):
+        while Helper.should_loop(user_input, previous_input):
+            print(bcolors.FAIL+'no good, pick another one'+bcolors.OKBLUE+bcolors.BOLD)
+            user_input = input()
+        return user_input
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+print("\n")
+print("\x1b[1;37;40m=========================\x1b[0m")
+print("\x1b[1;37;40m=== TIC TAC TOE GAME ====\x1b[0m")
+print("\x1b[1;37;40m=========================\x1b[0m\n")
+
+print(bcolors.BOLD+"You're about to witness a true MASTER playing!!\nChoose your weap.. oh, characters!\n")
 playing = True
 while (playing):
+    print("NEW GAME... \n")
+
     print("enter player 1 char:")
-    player1 = input()
+    player1 = Helper.validate_input(input(), None)
+    print("\nok, player picked", player1, "\n")
+
     print("enter AI player char:")
-    player2 = input()
+    player2 = Helper.validate_input(input(), player1)
+    print("\nok, I'll use", player2, "\n")
+
     curr_game = TicTacToe(player1, player2)
 
+    print("choose the level of difficulty, type: (E)asy or (H)ard")
+    difficulty = input().lower()
+    while difficulty not in ["easy","hard"]:
+        print(bcolors.FAIL+"invalid choice bro, try again"+bcolors.OKBLUE)
+        difficulty = input().lower()
+
+    if difficulty == "easy" or difficulty == "e":
+        print("\nI feel dumber already\n")
+        ai = DumbAI()
+    elif difficulty == "hard" or difficulty == "h":
+        print("\nI will own you!\n")
+        ai = SmartAI()
+
+    print("Alright, let's do this!\n")
+
     curr_game.print_index_board()
-    print("starting... \n")
 
     while curr_game.game_over() == "notover":
         if curr_game.current_marker == curr_game.user_marker:
             print("It's your turn, pick an index:")
             p_spot = int(input())
             while not curr_game.play_turn(p_spot):
-                print("Invalid spot, try again...\n")
+                print(bcolors.FAIL+"Invalid spot, try again...\n"+bcolors.ENDC+bcolors.BOLD)
                 p_spot = int(input())
-            print("You picked", p_spot)
+            print("You picked","\x1b[6;30;42m", p_spot, "\x1b[0m")
             print("\n")
         else:
             print("It's my turn!!")
-            try:
-                ai_pic = AI.pick_spot(curr_game)
-            except Exception:
-                print("Error, no choices left\ngame over")
-                playing = False
-                sys.exit()
+            ai_pic = ai.pick_spot(curr_game)
             curr_game.play_turn(ai_pic)
-            print("I picked", ai_pic)
+            print("I picked","\x1b[6;30;42m",ai_pic,"\x1b[0m")
             print("\n")
         curr_game.print_board()
 
     print(curr_game.game_over())
-    print("Do you want to play again? Enter Y for yes or anything else for no.")
-    answer = input()
-    playing = (answer == 'Y')
+    print("Do you want to play again? Enter (Y)es or anything else for no.")
+    answer = input().lower()
+    playing = (answer == 'y' or answer == "yes")
     if not playing:
-        print("Ok chap, take care...")
+        print(bcolors.UNDERLINE+"Ok chap, take care...")
