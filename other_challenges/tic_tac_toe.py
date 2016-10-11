@@ -229,11 +229,11 @@ while (playing):
 
     print("enter player 1 char:")
     player1 = Helper.validate_input(input(), None)
-    print("\nok, player picked", player1, "\n")
+    print("\nok, you've picked \x1b[6;30;42m", player1, "\x1b[0m\n")
 
     print("enter AI player char:")
     player2 = Helper.validate_input(input(), player1)
-    print("\nok, I'll use", player2, "\n")
+    print("\nok, I'll use \x1b[6;30;42m", player2, "\x1b[0m\n")
 
     curr_game = TicTacToe(player1, player2)
 
