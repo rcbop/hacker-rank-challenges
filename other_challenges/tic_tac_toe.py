@@ -229,18 +229,18 @@ while (playing):
 
     print("enter player 1 char:")
     player1 = Helper.validate_input(input(), None)
-    print("\nok, you've picked \x1b[6;30;42m", player1, "\x1b[0m\n")
+    print("\nok, you've picked \x1b[6;30;42m", player1, "\x1b[0m\n"+bcolors.BOLD)
 
     print("enter AI player char:")
     player2 = Helper.validate_input(input(), player1)
-    print("\nok, I'll use \x1b[6;30;42m", player2, "\x1b[0m\n")
+    print("\nok, I'll use \x1b[6;30;42m", player2, "\x1b[0m\n"+bcolors.BOLD)
 
     curr_game = TicTacToe(player1, player2)
 
     print("choose the level of difficulty, type: (E)asy or (H)ard")
     difficulty = input().lower()
-    while difficulty not in ["easy","hard"]:
-        print(bcolors.FAIL+"invalid choice bro, try again"+bcolors.OKBLUE)
+    while difficulty not in ["easy","hard","h","e"]:
+        print(bcolors.FAIL+"invalid choice bro, try again"+bcolors.ENDC+bcolors.BOLD)
         difficulty = input().lower()
 
     if difficulty == "easy" or difficulty == "e":
@@ -276,4 +276,4 @@ while (playing):
     answer = input().lower()
     playing = (answer == 'y' or answer == "yes")
     if not playing:
-        print(bcolors.UNDERLINE+"Ok chap, take care...")
+        print(bcolors.UNDERLINE+"Ok chap, take care...\n")
